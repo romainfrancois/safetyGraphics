@@ -7,8 +7,12 @@ updateSettingStatus<-function(ns, name, status_short, status_long){
     shinyjs::html(id = msg_id,
                   html = paste0("   <em style='color:green; font-size:12px;'>", status_short,"</em>"))
     
-    shinyjs::runjs(paste0('$("#',ns(tooltip_id), '").attr("title", "Selection is valid")'))
-    
+    if (status_long==""){
+      shinyjs::runjs(paste0('$("#',ns(tooltip_id), '").attr("title", "Selection is valid")'))
+    } else {
+      shinyjs::runjs(paste0('$("#',ns(tooltip_id), '").attr("title", "', status_long, '")'))
+    }
+
   } else {
     shinyjs::html(id = msg_id,
                   html = paste0("   <em style='color:red; font-size:12px;'>", status_short,"</em>"))

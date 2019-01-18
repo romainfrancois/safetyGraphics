@@ -131,24 +131,37 @@ dataUpload <- function(input, output, session){
       if (partial) {
         partial_cols <- standard()$details[[current_standard]]$matched_columns
         
-        generateSettings(standard=current_standard, chart="eDish", partial=partial, partial_cols = partial_cols)
+        list(
+          eDish = generateSettings(standard=current_standard, chart="eDish", partial=partial, partial_cols = partial_cols),
+          safetyHistogram = generateSettings(standard=current_standard, chart="safetyHistogram", 
+                                             partial=partial, partial_cols = partial_cols)
+        )
         
       } else {
-        generateSettings(standard=current_standard, chart="eDish")
+        list(
+          eDish = generateSettings(standard=current_standard, chart="eDish"),
+          safetyHistogram = generateSettings(standard=current_standard, chart="safetyHistogram")
+        )
       } 
     } else {
-      generateSettings(standard=current_standard, chart="eDish")
+      list(
+        eDish = generateSettings(standard=current_standard, chart="eDish"),
+        safetyHistogram = generateSettings(standard=current_standard, chart="safetyHistogram")
+      )
     }
   })
   
-
+  
+  
   # run validateSettings(data, standard, settings) and return a status
   status <- reactive({
     req(data_selected())
     req(settings())
-    validateSettings(data_selected(), 
-                     settings(),
-                     chart="eDish")  
+
+    list(
+      eDish = validateSettings(data_selected(), settings()$eDish, chart="eDish"),  
+      safetyHistogram = validateSettings(data_selected(), settings()$safetyHistogram, chart="safetyHistogram")  
+    )
   })
   
 

@@ -1,6 +1,8 @@
 source("modules/renderSettings/util/labelSetting.R")
 source("modules/renderSettings/util/flagSetting.R")
 source("modules/renderSettings/util/updateSettingStatus.R")
+source("modules/renderSettings/util/getChartSettings.R")
+source("modules/renderSettings/util/combineSettings.R")
 
 renderSettings <- function(input, output, session, data, settings, status){
   
@@ -11,7 +13,7 @@ renderSettings <- function(input, output, session, data, settings, status){
     # Custom observer for measure_col
     if(name=="measure_col"){
       observe({
-        settings <- settings()
+        settings <- combined_settings() #settings()
         
         req(input$measure_col)
         
@@ -62,7 +64,7 @@ renderSettings <- function(input, output, session, data, settings, status){
     # Custom observer for baseline
     if(name=="baseline--value_col"){
       observe({
-        settings <- settings()
+        settings <- combined_settings() #settings()
         
         req(input$`baseline--value_col`)
         
@@ -91,7 +93,7 @@ renderSettings <- function(input, output, session, data, settings, status){
     # Custom observer for analysis population
     if(name=="analysisFlag--value_col"){
       observe({
-        settings <- settings()
+        settings <- combined_settings() #settings()
         
         req(input$`analysisFlag--value_col`)
         
@@ -141,11 +143,10 @@ renderSettings <- function(input, output, session, data, settings, status){
   
   settings_new <- reactive({
     
-    #  print(input$id_col)
-    
-    settings <- list(id_col = input$id_col,
+    settings_all <- list(id_col = input$id_col,
                      value_col = input$value_col,
                      measure_col = input$measure_col,
+                     unit_col = input$unit_col,
                      normal_col_low = input$normal_col_low,
                      normal_col_high = input$normal_col_high,
                      studyday_col = input$studyday_col,
@@ -161,71 +162,96 @@ renderSettings <- function(input, output, session, data, settings, status){
                      r_ratio_filter = input$r_ratio_filter,
                      r_ratio_cut = input$r_ratio_cut,
                      showTitle = input$showTitle,
-                     warningText = input$warningText)
+                     warningText = input$warningText,
+                     missingValues = input$missingValues)
     
     if (! is.null(input$`baseline--values`)){
       if (! input$`baseline--values`[1]==""){
-        settings$baseline <- list(value_col = input$`baseline--value_col`,
+        settings_all$baseline <- list(value_col = input$`baseline--value_col`,
                                   values = input$`baseline--values`)
       }
+    } else {
+      settings_all["baseline"] <- list(NULL)
     }
     
     if (! is.null(input$`analysisFlag--values`)){
       if (! input$`analysisFlag--values`==""){
-        settings$analysisFlag <- list(value_col = input$`analysisFlag--value_col`,
+        settings_all$analysisFlag <- list(value_col = input$`analysisFlag--value_col`,
                                       values = input$`analysisFlag--values`)
       }
+    } else {
+      settings_all["analysisFlag"] <- list(NULL)
     }
     
     if (!is.null(input$filters)){
       for (i in 1:length(input$filters)){
-        settings$filters[[i]] <- list(value_col = input$filters[[i]],
+        settings_all$filters[[i]] <- list(value_col = input$filters[[i]],
                                       label = input$filters[[i]])
       }
+    } else {
+      settings_all["filters"] <- list(NULL)
     }
+    
     if (!is.null(input$group_cols)){
       for (i in 1:length(input$group_cols)){
-        settings$group_cols[[i]] <- list(value_col = input$group_cols[[i]],
+        settings_all$group_cols[[i]] <- list(value_col = input$group_cols[[i]],
                                          label = input$group_cols[[i]])
       }
+    } else {
+      settings_all["group_cols"] <- list(NULL)
     }
+    
+    if (!is.null(input$details)){
+      for (i in 1:length(input$details)){
+        settings_all$details[[i]] <- list(value_col = input$details[[i]],
+                                         label = input$details[[i]])
+      }
+    } else {
+      settings_all["details"] <- list(NULL)
+    }
+  
+    settings <- list()
+    settings[["eDish"]] <- getChartSettings(settings_all, "eDish")
+    settings[["safetyHistogram"]] <- getChartSettings(settings_all, "safetyHistogram")
     
     return(settings)
   })
   
-  
+
   # validate new settings
   #  the validation is run every time there is a change in data and/or settings.
-  #
-  #  NOTE: to prevent status updating as loop runs and fills in settings(),
-  #   require the very last updated input to be available <- can't do this b/c we will have lots of
-  #   null settings to start when no standard detected...
   status_new <- reactive({ #eventReactive(settingsUI_list$settings,{
     req(data())
     req(settings_new())
-    name <- rev(isolate(input_names()))[1]
     settings_new <- settings_new()
+
+    # for (i in names(settings_new)){
+    #   if (!is.null(settings_new[[i]])){
+    #     if (settings_new[[i]][1]==""){
+    #       settings_new[i] <- list(NULL)
+    #     }
+    #   }
+    # }
     
-    for (i in names(settings_new)){
-      if (!is.null(settings_new[[i]])){
-        if (settings_new[[i]][1]==""){
-          settings_new[i] <- list(NULL)
-        }
-      }
-    }
-    
-    validateSettings(data(), settings_new, chart="eDish")
-    
+    status <- list()
+    status[["eDish"]] <- validateSettings(data(), settings_new[["eDish"]], chart="eDish")
+    status[["safetyHistogram"]] <- validateSettings(data(), settings_new[["safetyHistogram"]], chart="safetyHistogram")
+  
+    return(status)
   })
   
-  
-  #Setting Status information (from failed checks only)
   status_df <- reactive({
+    
     req(status_new())
-    status_new()$checkList %>%
+    
+    status_new() %>% 
+      flatten %>% 
+      keep(., names(.)=="checkList") %>% 
+      flatten %>%
       map(., ~ keep(., names(.) %in% c("text_key","valid","message")) %>%
             data.frame(., stringsAsFactors = FALSE)) %>%
-      bind_rows %>%
+      bind_rows() %>%
+      unique() %>%
       group_by(text_key) %>%
       mutate(num_fail = sum(valid==FALSE)) %>%
       mutate(message_long = paste(message, collapse = " ") %>% trimws(),
@@ -235,10 +261,31 @@ renderSettings <- function(input, output, session, data, settings, status){
                TRUE ~ paste(num_fail, "failed checks.")
              )) %>%
       select(text_key, message_long, message_short, num_fail) %>%
-      unique 
+      unique
   })
   
-  
+ 
+
+  # #Setting Status information (from failed checks only)
+  # status_df <- reactive({
+  #   req(status_new())
+  #   status_new()$checkList %>%
+  #     map(., ~ keep(., names(.) %in% c("text_key","valid","message")) %>%
+  #           data.frame(., stringsAsFactors = FALSE)) %>%
+  #     bind_rows %>%
+  #     group_by(text_key) %>%
+  #     mutate(num_fail = sum(valid==FALSE)) %>%
+  #     mutate(message_long = paste(message, collapse = " ") %>% trimws(),
+  #            message_short = case_when(
+  #              num_fail==0 ~ "OK",
+  #              num_fail==1 ~ "1 failed check.",
+  #              TRUE ~ paste(num_fail, "failed checks.")
+  #            )) %>%
+  #     select(text_key, message_long, message_short, num_fail) %>%
+  #     unique 
+  # })
+  # 
+  # 
   #List of required settings
   req_settings <- safetyGraphics:::getSettingsMetadata() %>% 
     filter(chart_edish==TRUE & setting_required==TRUE) %>% 
@@ -248,6 +295,9 @@ renderSettings <- function(input, output, session, data, settings, status){
   custom_observer_settings <- c("measure_col", "baseline--value_col","analysisFlag--value_col")
   
   
+  # create combined settings object for filling UI
+  combined_settings <- reactive({combineSettings(settings())})
+
   #Establish observers to update settings UI for all inputs
   #  Different observers:
   #     (1a) update UI based on data selection & original settings object
@@ -268,12 +318,12 @@ renderSettings <- function(input, output, session, data, settings, status){
     for (name in isolate(input_names())){
       #print(name)
       setting_key <- as.list(strsplit(name,"\\-\\-"))
-      setting_value <- safetyGraphics:::getSettingValue(key=setting_key, settings=settings())
-      setting_label <- safetyGraphics:::getSettingsMetadata(charts="eDiSH", text_keys=name, cols="label") 
-      setting_description <- safetyGraphics:::getSettingsMetadata(charts="eDiSH", text_keys=name, cols="description") 
+      setting_value <- safetyGraphics:::getSettingValue(key=setting_key, settings=combined_settings()) #settings=settings())
+      setting_label <- safetyGraphics:::getSettingsMetadata(charts=c("eDiSH", "safetyhistogram"), text_keys=name, cols="label") 
+      setting_description <- safetyGraphics:::getSettingsMetadata(charts=c("eDiSH", "safetyhistogram"), text_keys=name, cols="description") 
       
       
-      column_mapping_ids <- safetyGraphics:::getSettingsMetadata(charts="eDiSH") %>% filter(column_mapping==TRUE) %>% pull(text_key) 
+      column_mapping_ids <- safetyGraphics:::getSettingsMetadata(charts=c("eDiSH", "safetyhistogram")) %>% filter(column_mapping==TRUE) %>% pull(text_key) 
       
       
       if (name %in% column_mapping_ids){
@@ -321,22 +371,22 @@ renderSettings <- function(input, output, session, data, settings, status){
   
   observe({
     for (name in isolate(input_names())){
-      
+
       # 5. Print a warning if the input failed a validation check
       if(name %in% status_df()$text_key){
-        
+
         status_short <- status_df()[status_df()$text_key==name, "message_short"]
         status_long <- status_df()[status_df()$text_key==name, "message_long"]
-        
+
         updateSettingStatus(ns=ns, name=name, status_short=status_short, status_long=status_long)
       }
-      
+
     }
   })
-  
-  
+
+
   ### return updated settings and status to global env.
   return(list(settings = reactive(settings_new()),
               status = reactive(status_new())))
-  
+
 }

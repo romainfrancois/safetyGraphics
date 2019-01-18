@@ -77,6 +77,13 @@ renderSettingsUI <- function(id){
                        span(id = ns("tt_msg_normal_col_high"), title = "",
                             tags$label(id = ns("msg_normal_col_high"), "")),
                        selectizeInput(ns("normal_col_high"),NULL, choices = NULL)
+                     ),
+                     div(
+                       span(id = ns("tt_lbl_unit_col"), title = "",
+                            tags$label(id = ns("lbl_unit_col"), "")),
+                       span(id = ns("tt_msg_unit_col"), title = "",
+                            tags$label(id = ns("msg_unit_col"), "")),
+                       selectizeInput(ns("unit_col"),NULL, choices = NULL)
                      )
               ) ,
               column(6,
@@ -133,6 +140,13 @@ renderSettingsUI <- function(id){
                        selectInput(ns("group_cols"),NULL, choices = NULL, selected = NULL, multiple = TRUE)
                      ),
                      div(
+                       span(id = ns("tt_lbl_details"), title = "",
+                            tags$label(id = ns("lbl_details"), "")),
+                       span(id = ns("tt_msg_details"), title = "",
+                            tags$label(id = ns("msg_details"), "")),
+                       selectInput(ns("details"),NULL, choices = NULL, selected = NULL, multiple = TRUE)
+                     ),
+                     div(
                        span(id = ns("tt_lbl_analysisFlag--value_col"), title = "",
                             tags$label(id = ns("lbl_analysisFlag--value_col"), "")),
                        span(id = ns("tt_msg_analysisFlag--value_col"), title = "",
@@ -145,6 +159,13 @@ renderSettingsUI <- function(id){
                        span(id = ns("tt_msg_analysisFlag--values"), title = "",
                             tags$label(id = ns("msg_analysisFlag--values"), "")),
                        selectizeInput(ns("analysisFlag--values"),NULL, choices = NULL, multiple = TRUE)
+                     ),
+                     div(
+                       span(id = ns("tt_lbl_missingValues"), title = "",
+                            tags$label(id = ns("lbl_missingValues"), "")),
+                       span(id = ns("tt_msg_missingValues"), title = "",
+                            tags$label(id = ns("msg_missingValues"), "")),
+                       selectInput(ns("missingValues"),NULL, choices = c("''",'NA','N/A'), selected = c("''",'NA','N/A'), multiple = TRUE)
                      ),
                      br(),
                      br(),
