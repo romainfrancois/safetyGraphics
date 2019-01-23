@@ -8,7 +8,7 @@ safetyHistogram(data, id_col = "USUBJID", value_col = "STRESN",
   measure_col = "TEST", normal_col_low = "STNRLO",
   normal_col_high = "STNRHI", unit_col = "STRESU", filters = NULL,
   details = NULL, start_value = NULL, missingValues = c("", "NA",
-  "N/A"), debug_js = TRUE, settings = NULL)
+  "N/A"), debug_js = FALSE, settings = NULL)
 }
 \arguments{
 \item{data}{A data frame containing the labs data. Data must be structured as one record per study participant per time point per lab measure.}
@@ -50,7 +50,7 @@ safetyHistogram(data=adlbc,
                measure_col = "PARAM", 
                normal_col_low = "A1LO", 
                normal_col_high = "A1HI", 
-               unit_col="PARAMCD")
+               unit_col = "PARAMCD")
 
 ## Create eDISH figure using a premade settings list
 details_list <- list(
@@ -70,10 +70,10 @@ filters_list <- list(
 settingsl <- list(id_col = "USUBJID",
       value_col = "AVAL", 
       measure_col = "PARAM", 
-      unit_col="PARAMCD",
+      unit_col = "PARAMCD",
       normal_col_low = "A1LO", 
       normal_col_high = "A1HI", 
-      details = detail_list,
+      details = details_list,
       filters = filters_list)
       
 safetyHistogram(data=adlbc, settings = settingsl)
