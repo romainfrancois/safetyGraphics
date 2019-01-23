@@ -15,7 +15,7 @@ getRequiredColumns<-function(standard,chart="eDish"){
   stopifnot(
     typeof(standard)=="character",
     typeof(chart)=="character",
-    tolower(chart)=="edish"
+    tolower(chart) %in% c("edish", "safetyhistogram")
   )
   
   if(tolower(chart)=="edish"){
@@ -26,7 +26,15 @@ getRequiredColumns<-function(standard,chart="eDish"){
     }else{
       return(NULL)
     }
-  }else{
+  }else if(tolower(chart)=="safetyhistogram"){
+    if(tolower(standard)=="adam"){
+      return(c("USUBJID","AVAL","PARAM","VISIT","VISITNUM","ADY","A1LO","A1HI","PARAMCD"))
+    }else if(tolower(standard)=="sdtm"){
+      return(c("USUBJID","STRESN","TEST","VISIT","VISITNUM","DY","STNRLO","STNRHI","STRESU")) 
+    }else{
+      return(NULL)
+    }
+  } else {
     return(NULL)
   }
 }

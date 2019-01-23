@@ -27,8 +27,8 @@
 #' @export
 
 generateSettings <- function(standard="None", chart="eDish", partial=FALSE, partial_cols=NULL){
-  if(tolower(chart)!="edish"){
-    stop(paste0("Can't generate settings for the specified chart ('",chart,"'). Only the 'eDish' chart is supported for now."))
+  if(! tolower(chart) %in% c("edish", "safetyhistogram")){
+    stop(paste0("Can't generate settings for the specified chart ('",chart,"'). Only the 'eDish' and 'safetyHistogram' charts are supported for now."))
   }
   
   # Check that partial_cols is supplied if partial is true
@@ -38,66 +38,103 @@ generateSettings <- function(standard="None", chart="eDish", partial=FALSE, part
   
   
   #A shell setting object without any data mapping completed
-  settings<-list(
-    id_col = NULL,
-    value_col = NULL,
-    measure_col = NULL,
-    normal_col_low = NULL,
-    normal_col_high = NULL,
-    studyday_col=NULL,
-    visit_col = NULL,
-    visitn_col = NULL,
-    filters = NULL,
-    group_cols = NULL,
-    measure_values = list(ALT = NULL,
-                          AST = NULL,
-                          TB = NULL,
-                          ALP = NULL),
-    baseline = list(value_col=NULL,
-                    values=list()),
-    analysisFlag = list(value_col=NULL,
-                    values=list()),
+  if (tolower(chart)=="edish"){
+    settings<-list(
+      id_col = NULL,
+      value_col = NULL,
+      measure_col = NULL,
+      normal_col_low = NULL,
+      normal_col_high = NULL,
+      studyday_col=NULL,
+      visit_col = NULL,
+      visitn_col = NULL,
+      filters = NULL,
+      group_cols = NULL,
+      measure_values = list(ALT = NULL,
+                            AST = NULL,
+                            TB = NULL,
+                            ALP = NULL),
+      baseline = list(value_col=NULL,
+                      values=list()),
+      analysisFlag = list(value_col=NULL,
+                          values=list()),
+      
+      x_options = c("ALT", "AST", "ALP"),
+      y_options = c("TB", "ALP"),
+      visit_window = 30,
+      r_ratio_filter = TRUE,
+      r_ratio_cut = 0,
+      showTitle = TRUE,
+      warningText = "Caution: This interactive graphic is not validated. Any clinical recommendations based on this tool should be confirmed using your organizations standard operating procedures."
+    )
     
-    x_options = c("ALT", "AST", "ALP"),
-    y_options = c("TB", "ALP"),
-    visit_window = 30,
-    r_ratio_filter = TRUE,
-    r_ratio_cut = 0,
-    showTitle = TRUE,
-    warningText = "Caution: This interactive graphic is not validated. Any clinical recommendations based on this tool should be confirmed using your organizations standard operating procedures."
-  )
+    potential_settings <- settings
     
-  potential_settings <- settings
-  
-  if(tolower(standard)=="adam"){
-    potential_settings[["id_col"]]<-"USUBJID"
-    potential_settings[["value_col"]]<-"AVAL"
-    potential_settings[["measure_col"]]<-"PARAM"
-    potential_settings[["normal_col_low"]]<-"A1LO"
-    potential_settings[["normal_col_high"]]<-"A1HI"
-    potential_settings[["studyday_col"]]<-"ADY"
-    potential_settings[["visit_col"]]<-"VISIT"
-    potential_settings[["visitn_col"]]<-"VISITNUM"
-    potential_settings[["measure_values"]][["ALT"]]<-"Alanine Aminotransferase (U/L)"
-    potential_settings[["measure_values"]][["AST"]]<-"Aspartate Aminotransferase (U/L)"
-    potential_settings[["measure_values"]][["TB"]]<-"Bilirubin (umol/L)"
-    potential_settings[["measure_values"]][["ALP"]]<-"Alkaline Phosphatase (U/L)"
+    if(tolower(standard)=="adam"){
+      potential_settings[["id_col"]]<-"USUBJID"
+      potential_settings[["value_col"]]<-"AVAL"
+      potential_settings[["measure_col"]]<-"PARAM"
+      potential_settings[["normal_col_low"]]<-"A1LO"
+      potential_settings[["normal_col_high"]]<-"A1HI"
+      potential_settings[["studyday_col"]]<-"ADY"
+      potential_settings[["visit_col"]]<-"VISIT"
+      potential_settings[["visitn_col"]]<-"VISITNUM"
+      potential_settings[["measure_values"]][["ALT"]]<-"Alanine Aminotransferase (U/L)"
+      potential_settings[["measure_values"]][["AST"]]<-"Aspartate Aminotransferase (U/L)"
+      potential_settings[["measure_values"]][["TB"]]<-"Bilirubin (umol/L)"
+      potential_settings[["measure_values"]][["ALP"]]<-"Alkaline Phosphatase (U/L)"
+    }
+    
+    if(tolower(standard)=="sdtm"){
+      potential_settings[["id_col"]]<-"USUBJID"
+      potential_settings[["value_col"]]<-"STRESN"
+      potential_settings[["measure_col"]]<-"TEST"
+      potential_settings[["normal_col_low"]]<-"STNRLO"
+      potential_settings[["normal_col_high"]]<-"STNRHI"
+      potential_settings[["studyday_col"]]<-"DY"
+      potential_settings[["visit_col"]]<-"VISIT"
+      potential_settings[["visitn_col"]]<-"VISITNUM"
+      potential_settings[["measure_values"]][["ALT"]]<-"Aminotransferase, alanine (ALT)"
+      potential_settings[["measure_values"]][["AST"]]<-"Aminotransferase, aspartate (AST)"
+      potential_settings[["measure_values"]][["TB"]]<-"Total Bilirubin"
+      potential_settings[["measure_values"]][["ALP"]]<-"Alkaline phosphatase (ALP)"
+    }    
+    
+  } else if (tolower(chart)=="safetyhistogram"){
+    
+    settings<-list(
+      id_col = NULL,
+      value_col = NULL,
+      measure_col = NULL,
+      normal_col_low = NULL,
+      normal_col_high = NULL,
+      unit_col=NULL,
+      filters = NULL,
+      details = NULL,
+      missingValues = NULL
+    )
+    
+    potential_settings <- settings
+    
+    if(tolower(standard)=="adam"){
+      potential_settings[["id_col"]]<-"USUBJID"
+      potential_settings[["value_col"]]<-"AVAL"
+      potential_settings[["measure_col"]]<-"PARAM"
+      potential_settings[["normal_col_low"]]<-"A1LO"
+      potential_settings[["normal_col_high"]]<-"A1HI"
+      potential_settings[["unit_col"]]<-"PARAMCD"
+    }
+    
+    if(tolower(standard)=="sdtm"){
+      potential_settings[["id_col"]]<-"USUBJID"
+      potential_settings[["value_col"]]<-"STRESN"
+      potential_settings[["measure_col"]]<-"TEST"
+      potential_settings[["normal_col_low"]]<-"STNRLO"
+      potential_settings[["normal_col_high"]]<-"STNRHI"
+      potential_settings[["unit_col"]]<-"STRESU"
+    }    
   }
-  
-  if(tolower(standard)=="sdtm"){
-    potential_settings[["id_col"]]<-"USUBJID"
-    potential_settings[["value_col"]]<-"STRESN"
-    potential_settings[["measure_col"]]<-"TEST"
-    potential_settings[["normal_col_low"]]<-"STNRLO"
-    potential_settings[["normal_col_high"]]<-"STNRHI"
-    potential_settings[["studyday_col"]]<-"DY"
-    potential_settings[["visit_col"]]<-"VISIT"
-    potential_settings[["visitn_col"]]<-"VISITNUM"
-    potential_settings[["measure_values"]][["ALT"]]<-"Aminotransferase, alanine (ALT)"
-    potential_settings[["measure_values"]][["AST"]]<-"Aminotransferase, aspartate (AST)"
-    potential_settings[["measure_values"]][["TB"]]<-"Total Bilirubin"
-    potential_settings[["measure_values"]][["ALP"]]<-"Alkaline phosphatase (ALP)"
-  }
+
   
   
   if(partial) {
