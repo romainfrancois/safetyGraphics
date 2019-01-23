@@ -11,13 +11,21 @@ tagList(
                       dataUploadUI("datatab")
              ),
              tabPanel(title = htmlOutput("settings_tab_title"),
-                    fluidPage(
+                 #   fluidPage(
                       renderSettingsUI("settingsUI")
-                    )
+                 #   )
            ),
-           tabPanel(title = htmlOutput("chart_tab_title"),
-                    id = "charttab",
-                    renderEDishChartUI("chartEDish")
-          )
-)
+           navbarMenu(title = htmlOutput("chart_tab_title", inline=TRUE),
+                      renderChartUI("charts"))
+                      # tabPanel("eDISH", 
+                      #          title = htmlOutput("eDISH_title", inline=TRUE),
+                      #          renderEDishChartUI("chartEDish")),
+                      # tabPanel("safetyHistogram",
+                      #          renderSafetyHistogramChartUI("chartSafetyHistogram"))
+           )
+          #  tabPanel(title = htmlOutput("chart_tab_title"),
+          #           id = "charttab",
+          #           renderEDishChartUI("chartEDish")
+          # )
+#)
 )

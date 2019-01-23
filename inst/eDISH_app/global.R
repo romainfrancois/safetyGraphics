@@ -11,8 +11,14 @@ library(DT)
 source('modules/renderSettings/renderSettingsUI.R')
 source('modules/renderSettings/renderSettings.R')
 
+source('modules/renderChart/renderChartUI.R')
+source('modules/renderChart/renderChart.R')
+
 source('modules/renderChart/renderEDishChartUI.R')
 source('modules/renderChart/renderEDishChart.R')
+
+source('modules/renderChart/renderSafetyHistogramChartUI.R')
+source('modules/renderChart/renderSafetyHistogramChart.R')
 
 source('modules/dataUpload/dataUploadUI.R')
 source('modules/dataUpload/dataUpload.R')
